@@ -28,6 +28,6 @@ jobs:
       env:
         IMAGE_TAG: ${{ github.sha }}
       run: |
-        docker build -t public.ecr.aws/j7m3k0v4/remotemananger:$IMAGE_TAG .
-        docker build -t public.ecr.aws/j7m3k0v4/remotemananger:latest .
-        docker push --all-tags public.ecr.aws/j7m3k0v4/remotemananger
+        docker build -t public.ecr.aws/j7m3k0v4/remotemanager:$IMAGE_TAG .
+        docker build -t public.ecr.aws/j7m3k0v4/remotemanager:latest .
+        docker push --all-tags public.ecr.aws/j7m3k0v4/remotemanager
