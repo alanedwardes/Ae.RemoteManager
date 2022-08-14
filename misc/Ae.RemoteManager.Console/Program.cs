@@ -90,7 +90,13 @@ namespace Ae.Dns.Console
             using var cmd = client.CreateCommand(command);
             logger.LogInformation("Executing {CommandText}", cmd.CommandText);
             cmd.Execute();
-            logger.LogInformation("Executed {CommandText} in {ElapsedSeconds}s. Result: {ExitResult}, status: {ExitStatus}, error: {Error}", command, sw.Elapsed.TotalSeconds, cmd.Result.Trim(), cmd.ExitStatus, cmd.Error.Trim());
+
+            if (cmd.ExitStatus != 0)
+            {
+                throw new InvalidOperationException($"Command {cmd.CommandText} failed in {sw.Elapsed.TotalSeconds} with error {cmd.Error.Trim()}");
+            }
+
+            logger.LogInformation("Executed {CommandText} in {ElapsedSeconds}s. Result: {Result}", command, sw.Elapsed.TotalSeconds, cmd.Result.Trim());
         }
 
         private static SshClient CreateSshClient(RemoteInstructions instructions)
