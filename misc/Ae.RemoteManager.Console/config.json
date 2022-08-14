@@ -1,0 +1,15 @@
+{
+  "instructions": {
+    "test1": {
+      "enabled": true,
+      "testing": true,
+      "cron": "0 2 * * *",
+      "endpoint": "address",
+      "username": "username",
+      "password": "password",
+      "commands": [
+        "echo \"test\""
+      ]
+    }
+  }
+}
