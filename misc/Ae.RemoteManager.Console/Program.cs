@@ -103,7 +103,8 @@ namespace Ae.Dns.Console
         {
             if (instructions.Password == null)
             {
-                return new SshClient(instructions.Endpoint, instructions.Username, new PrivateKeyFile(instructions.PrivateKey));
+                using var privateKeyStream = File.OpenRead(instructions.PrivateKeyFile);
+                return new SshClient(instructions.Endpoint, instructions.Username, new PrivateKeyFile(privateKeyStream));
             }
 
             return new SshClient(instructions.Endpoint, instructions.Username, instructions.Password);

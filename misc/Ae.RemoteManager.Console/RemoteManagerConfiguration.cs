@@ -16,7 +16,7 @@ namespace Ae.Dns.Console
         public string Endpoint { get; set; }
         public string Username { get; set; }
         public string Password { get; set; }
-        public string PrivateKey { get; set; }
+        public string PrivateKeyFile { get; set; }
         public IList<string> Commands { get; set;} = new List<string>();
     }
 }
