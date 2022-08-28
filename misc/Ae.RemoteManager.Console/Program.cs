@@ -1,4 +1,5 @@
-﻿using Cronos;
+﻿using Ae.RemoteManager.Console;
+using Cronos;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Renci.SshNet;
@@ -57,7 +58,7 @@ namespace Ae.Dns.Console
                 var sw = Stopwatch.StartNew();
                 try
                 {
-                    RunInstruction(instructions, logger);
+                    RunInstructions(instructions.Value, logger);
                 }
                 catch (Exception ex)
                 {
@@ -71,17 +72,40 @@ namespace Ae.Dns.Console
             while (!token.IsCancellationRequested && !instructions.Value.Testing);
         }
 
-        private static void RunInstruction(KeyValuePair<string, RemoteInstructions> instructions, ILogger logger)
+        private static void RunInstructions(RemoteInstructions instructions, ILogger logger)
         {
-            using var ssh = CreateSshClient(instructions.Value);
-            ssh.Connect();
-
-            foreach (var command in instructions.Value.Commands)
+            if (instructions.Password == null)
             {
-                RunCommand(ssh, logger, command);
+                using var privateKeyStream = File.OpenRead(instructions.PrivateKeyFile);
+
+                using var privateKeyFile = new PrivateKeyFile(privateKeyStream);
+                RsaSha256Util.ConvertToKeyWithSha256Signature(privateKeyFile);
+
+                using var privateKeyAuthenticationMethod = new PrivateKeyAuthenticationMethod(instructions.Username, privateKeyFile);
+
+                var connectionInfo = new ConnectionInfo(instructions.Endpoint, instructions.Username, privateKeyAuthenticationMethod);
+                RsaSha256Util.SetupConnection(connectionInfo); // adds rsa-sha2-256
+
+                using var sshClient = new SshClient(connectionInfo);
+                RunCommands(sshClient, logger, instructions);
+            }
+            else
+            {
+                using var sshClient = new SshClient(instructions.Endpoint, instructions.Username, instructions.Password);
+                RunCommands(sshClient, logger, instructions);
+            }
+        }
+
+        private static void RunCommands(SshClient client, ILogger logger, RemoteInstructions instructions)
+        {
+            client.Connect();
+
+            foreach (var command in instructions.Commands)
+            {
+                RunCommand(client, logger, command);
             }
 
-            ssh.Disconnect();
+            client.Disconnect();
         }
 
         private static void RunCommand(SshClient client, ILogger logger, string command)
@@ -97,17 +121,6 @@ namespace Ae.Dns.Console
             }
 
             logger.LogInformation("Executed {CommandText} in {ElapsedSeconds}s. Result: {Result}", command, sw.Elapsed.TotalSeconds, cmd.Result.Trim());
-        }
-
-        private static SshClient CreateSshClient(RemoteInstructions instructions)
-        {
-            if (instructions.Password == null)
-            {
-                using var privateKeyStream = File.OpenRead(instructions.PrivateKeyFile);
-                return new SshClient(instructions.Endpoint, instructions.Username, new PrivateKeyFile(privateKeyStream));
-            }
-
-            return new SshClient(instructions.Endpoint, instructions.Username, instructions.Password);
         }
     }
 }
